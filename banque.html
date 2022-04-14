@@ -1,0 +1,315 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+        <meta charset='utf-8'>
+        <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+        <title>Une Simple Banque</title>
+        <meta name='viewport' content='width=device-width, initial-scale=1'>
+		<script src='node_modules/web3/dist/web3.min.js'></script>
+          <script src='https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.37/dist/web3.min.js'>
+        </script>
+        <script     src="https://code.jquery.com/jquery-3.5.1.min.js"  crossorigin="anonymous"></script>
+    </head>
+    <body>
+        
+            <input style="margin-top:20px; margin-left:40px;" placeholder="Entrer la valeur" type="text" id="val" name="val"><br>
+            <!--input style="margin-top:20px; margin-left:40px;" type="submit" value="Consulter">
+            <input style="margin-top:20px; margin-left:40px;" type="submit" value="Retirer"-->
+
+            <button style="margin-top:20px; margin-left:40px;"  onclick="get_balance();">Consulter</button>
+            <button onclick="deposit();">Deposer</button>
+            <button onclick="withdraw();">Retirer</button>
+            <br>
+            <input style="margin-top:20px; margin-left:40px;" placeholder="entrer ID" type="text" id="id" name="id"><br>
+            <input style="margin-top:20px; margin-left:40px;" placeholder="entrer le montant" type="text" id="montant" name="montant"><br>
+            <button  style="margin-top:20px; margin-left:40px;" onclick="transfer();">Envoyer</button>
+            <button  style="margin-top:20px; margin-left:40px;" onclick="get_deposit_events();">Show deposits</button>
+            <button  style="margin-top:20px; margin-left:40px;" onclick="get_withdraw_events();">Show withdraws</button>
+            <button  style="margin-top:20px; margin-left:40px;" onclick="get_transfer_events();">Show transfers</button>
+            <button  style="margin-top:20px; margin-left:40px;" onclick="get_events();">Show all events</button>
+
+            <br>
+        
+            <BR> <BR>
+        Status: <span style="margin-top:20px; margin-left:40px;" id="status">Loading...</span>
+
+       
+ <script type="text/javascript">
+    async function loadWeb3() {
+        if (window.ethereum) {
+            window.web3 = new Web3(window.ethereum);
+            try {
+                // Request account access if needed
+                await ethereum.enable();
+                // Acccounts now exposed
+                return true;
+            } catch (error) {
+                // User denied account access...
+                return false;
+            }
+        }
+        // Legacy dapp browsers...
+        else if (window.web3) {
+            window.web3 = new Web3(web3.currentProvider);
+            // Acccounts always exposed
+            return true;
+        }
+        // Non-dapp browsers...
+        else {
+            console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+            return false;
+        }
+    }
+
+    const contract_addr = "0x750A4e84991EB7bA280716791CD7269596c13B7d";
+    
+    async function loadContract() {
+        return await new window.web3.eth.Contract(ABI, contract_addr);
+    }
+
+    async function load() {
+        await loadWeb3();
+        window.contract = await loadContract();
+        let options = {
+            filter: {
+                value: [],
+            },
+            romBlock: 0
+        };
+        window.contract.events.allEvents(options) // on peut utilser allEvents
+        .on('data', event => console.log(event))
+        .on('changed', changed => console.log(changed))
+        .on('error', err => {throw err})
+        .on('connected', str => console.log(str))
+
+        updateStatus('Ready!');
+    }
+    
+    function updateStatus(status) {
+        const statusEl = document.getElementById('status');
+        statusEl.innerHTML = status;
+        console.log(status);
+    }
+
+    async function getCurrentAccount() { const accounts = await window.web3.eth.getAccounts(); return accounts[0]; } 
+
+    load();
+
+    ABI = [
+	{
+		"inputs": [],
+		"name": "deposit",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "_from",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "e_deposit",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "_from",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "_to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "e_transfer",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "_from",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "e_withdraw",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "destination_account",
+				"type": "address"
+			}
+		],
+		"name": "transfer_funds",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "get_balance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "get_deposits_total",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+    async function get_balance() {
+        const account = await getCurrentAccount();
+        updateStatus('Fetching account balance.');
+        const balance = await window.contract.methods.get_balance().call({from: account });
+        updateStatus(`Your account balance is: ${balance}`);
+    }
+
+    async function deposit() {
+        const amount = document.getElementById('val').value;
+        const account = await getCurrentAccount();
+        const coolNumber = await window.contract.methods.deposit().send({from: account, value: amount});
+        updateStatus('Deposit cleared.');
+    }
+
+    async function withdraw() {
+        const amount = document.getElementById('val').value;
+        const account = await getCurrentAccount();
+        updateStatus(`Requesting withdraw of ${amount}.`);
+        const coolNumber = await window.contract.methods.withdraw(amount).send({from: account});
+        updateStatus(`You withdrew ${amount}.`);
+    }
+
+    async function transfer() {
+        const amount = document.getElementById('montant').value;
+        const id = document.getElementById('id').value;
+
+        const account = await getCurrentAccount();
+        const coolNumber = await window.contract.methods.transfer_funds(amount, id).send({from: account});
+        updateStatus('Transfer cleared.');
+    }
+
+    async function get_events() {
+        let options = {
+            filter: {
+                value: []
+            },
+            fromBlock: 0, //Number || "earliest" || "pending" || "latest"
+            toBlock: 'latest'
+        };
+        const events = await window.contract.getPastEvents(options)
+        updateStatus(events);
+    };
+
+    async function get_deposit_events() {
+        let options = {
+            filter: {
+                value: []
+            },
+            fromBlock: 0, //Number || "earliest" || "pending" || "latest"
+            toBlock: 'latest'
+        };
+        const events = await window.contract.getPastEvents('e_deposit', options)
+        updateStatus(events[0].returnValues.amount);
+    };
+
+    async function get_withdraw_events() {
+        let options = {
+            filter: {
+                value: []
+            },
+            fromBlock: 0, //Number || "earliest" || "pending" || "latest"
+            toBlock: 'latest'
+        };
+        const events = await window.contract.getPastEvents('e_withdraw', options)
+        updateStatus(events);
+    };
+
+    async function get_transfer_events() {
+        let options = {
+            filter: {
+                value: []
+            },
+            fromBlock: 0, //Number || "earliest" || "pending" || "latest"
+            toBlock: 'latest'
+        };
+        const events = await window.contract.getPastEvents('e_transfer', options)
+        updateStatus(events);
+    };
+
+ </script>
+    </body>
+</html>
