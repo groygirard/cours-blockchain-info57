@@ -270,8 +270,7 @@
             fromBlock: 0, //Number || "earliest" || "pending" || "latest"
             toBlock: 'latest'
         };
-        const events = await window.contract.getPastEvents(options)
-        updateStatus(events);
+        window.contract.getPastEvents(options).then(results => console.log(results))
     };
 
     async function get_deposit_events() {
@@ -282,8 +281,7 @@
             fromBlock: 0, //Number || "earliest" || "pending" || "latest"
             toBlock: 'latest'
         };
-        const events = await window.contract.getPastEvents('e_deposit', options)
-        updateStatus(events[0].returnValues.amount);
+        window.contract.getPastEvents('e_deposit', options).then(results => console.log(results))
     };
 
     async function get_withdraw_events() {
@@ -294,8 +292,7 @@
             fromBlock: 0, //Number || "earliest" || "pending" || "latest"
             toBlock: 'latest'
         };
-        const events = await window.contract.getPastEvents('e_withdraw', options)
-        updateStatus(events);
+        window.contract.getPastEvents('e_withdraw', options).then(results => console.log(results))
     };
 
     async function get_transfer_events() {
@@ -306,8 +303,7 @@
             fromBlock: 0, //Number || "earliest" || "pending" || "latest"
             toBlock: 'latest'
         };
-        const events = await window.contract.getPastEvents('e_transfer', options)
-        updateStatus(events);
+        window.contract.getPastEvents('e_transfer', options).then(results => console.log(results))
     };
 
  </script>
